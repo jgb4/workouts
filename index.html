@@ -481,7 +481,7 @@
 <div id="app">
   <header class="site-header">
     <div class="site-logo">JG<span>B</span></div>
-    <div class="breadcrumb">/ <b>workouts</b> / cycle-1</div>
+    <div class="breadcrumb">/ <b>workouts</b> / cycle-2</div>
     <div class="header-actions">
       <span class="edit-badge" id="edit-badge">EDITING</span>
       <button class="btn-edit-toggle" id="edit-toggle-btn" onclick="toggleEdit()">Edit</button>
@@ -500,7 +500,7 @@
   </div>
 
   <nav class="week-nav" id="week-nav"></nav>
-  <div class="week-note-bar"><span id="week-note-text"></span></div>
+  <div class="week-note-bar"><span id="week-note-text" oninput="data.weeks[activeWeek].note = this.textContent"></span></div>
   <div class="day-grid" id="day-grid"></div>
 
   <footer class="site-footer">
@@ -683,7 +683,7 @@ const DEFAULT_DATA = {
             { name: "Face pull", sets: "3 × 15" },
             { name: "Barbell curl", sets: "3 × 10 (heavier)" }
           ],
-          note: "Pull-up max sets: rest 2 min between, track total reps. That number is your Cycle 2 benchmark."
+          note: "Pull-up max sets: rest 2 min between, track total reps. That number is your Cycle 3 benchmark."
         },
         {
           day: "Friday", type: "legs",
@@ -712,7 +712,7 @@ const DEFAULT_DATA = {
     },
     {
       label: "Week 4 — Test & Reset",
-      note: "Drop volume (1 set per exercise), maintain intensity. Weigh yourself Monday AM. Record bench 1RM estimate + pull-up count + squat 5RM. These numbers set Cycle 2.",
+      note: "Drop volume (1 set per exercise), maintain intensity. Weigh yourself Monday AM. Record bench 1RM estimate + pull-up count + squat 5RM. These numbers set Cycle 3.",
       days: [
         {
           day: "Monday", type: "push",
@@ -723,7 +723,7 @@ const DEFAULT_DATA = {
             { name: "Overhead barbell press", sets: "3 × 8" },
             { name: "Tricep rope pushdown", sets: "3 × 15" }
           ],
-          note: "Work up in sets of 5, 3, 2, 1 to find your max. Write it down — this is your Cycle 2 benchmark."
+          note: "Work up in sets of 5, 3, 2, 1 to find your max. Write it down — this is your Cycle 3 benchmark."
         },
         {
           day: "Tuesday", type: "cardio",
@@ -745,7 +745,7 @@ const DEFAULT_DATA = {
             { name: "Seated cable row", sets: "3 × 12" },
             { name: "Face pull", sets: "3 × 15" }
           ],
-          note: "Pull-up test: rest 2 min between sets, record total. In Cycle 2 you'll add weight to these."
+          note: "Pull-up test: rest 2 min between sets, record total. In Cycle 3 you'll add weight to these."
         },
         {
           day: "Friday", type: "legs",
@@ -756,7 +756,7 @@ const DEFAULT_DATA = {
             { name: "Bulgarian split squat", sets: "3 × 8/side" },
             { name: "Nordic hamstring curl", sets: "3 × 6" }
           ],
-          note: "5RM squat test: sets of 8, 5, 3, then your 5RM attempt. Record it. Cycle 2 squat programming starts from this number."
+          note: "5RM squat test: sets of 8, 5, 3, then your 5RM attempt. Record it. Cycle 3 squat programming starts from this number."
         },
         {
           day: "Saturday", type: "athletic",
