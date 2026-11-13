@@ -712,16 +712,16 @@ const DEFAULT_DATA = {
     },
     {
       label: "Week 4 — Test & Reset",
-      note: "Drop volume (1 set per exercise), maintain intensity. Weigh yourself Monday AM. Record bench 1RM estimate + pull-up count + squat 5RM. These numbers set Cycle 3.",
+      note: "Drop volume (2 sets on lifting accessories), maintain intensity. Weigh yourself Monday AM. Record bench 1RM estimate + pull-up count + squat 5RM. These numbers set Cycle 3.",
       days: [
         {
           day: "Monday", type: "push",
           title: "Push — Test Day",
           exercises: [
             { name: "Flat barbell bench — 1RM test", sets: "Work up to 1–2 rep max" },
-            { name: "Incline dumbbell press", sets: "3 × 10" },
-            { name: "Overhead barbell press", sets: "3 × 8" },
-            { name: "Tricep rope pushdown", sets: "3 × 15" }
+            { name: "Incline dumbbell press", sets: "2 × 10" },
+            { name: "Overhead barbell press", sets: "2 × 8" },
+            { name: "Tricep rope pushdown", sets: "2 × 15" }
           ],
           note: "Work up in sets of 5, 3, 2, 1 to find your max. Write it down — this is your Cycle 3 benchmark."
         },
@@ -741,9 +741,9 @@ const DEFAULT_DATA = {
           title: "Pull — Test Day",
           exercises: [
             { name: "Pull-up — max rep test", sets: "3 × max (record total)" },
-            { name: "Barbell row", sets: "3 × 10" },
-            { name: "Seated cable row", sets: "3 × 12" },
-            { name: "Face pull", sets: "3 × 15" }
+            { name: "Barbell row", sets: "2 × 10" },
+            { name: "Seated cable row", sets: "2 × 12" },
+            { name: "Face pull", sets: "2 × 15" }
           ],
           note: "Pull-up test: rest 2 min between sets, record total. In Cycle 3 you'll add weight to these."
         },
@@ -752,9 +752,9 @@ const DEFAULT_DATA = {
           title: "Legs — Test Day",
           exercises: [
             { name: "Back squat — 5RM test", sets: "Work up to 5-rep max" },
-            { name: "Romanian deadlift", sets: "3 × 10" },
-            { name: "Bulgarian split squat", sets: "3 × 8/side" },
-            { name: "Nordic hamstring curl", sets: "3 × 6" }
+            { name: "Romanian deadlift", sets: "2 × 10" },
+            { name: "Bulgarian split squat", sets: "2 × 8/side" },
+            { name: "Nordic hamstring curl", sets: "2 × 6" }
           ],
           note: "5RM squat test: sets of 8, 5, 3, then your 5RM attempt. Record it. Cycle 3 squat programming starts from this number."
         },
@@ -764,7 +764,7 @@ const DEFAULT_DATA = {
           exercises: [
             { name: "Box jump", sets: "3 × 5" },
             { name: "Cone drill / figure 8 agility", sets: "5 × 30s" },
-            { name: "Nordic hamstring curl", sets: "3 × 6" },
+            { name: "Lateral shuffle + sprint combo", sets: "4 × 30s" },
             { name: "Game-sim sprint circuit", sets: "10 × 30m w/ 30s rest" }
           ],
           note: "Game-sim sprints: 30m hard, walk back, 30s rest, go again. If you're playing games again soon, this preps you."
@@ -911,7 +911,7 @@ function removeExercise(wi, di, ei) {
 }
 
 function saveAll() {
-  try { localStorage.setItem('jgb_workouts', JSON.stringify(data)); } catch(e) {}
+  try { localStorage.setItem('jgb_workouts', JSON.stringify({ v: DATA_VERSION, data })); } catch(e) {}
   showToast('Saved ✓');
   editMode = false;
   document.body.classList.remove('edit-mode');
@@ -922,9 +922,19 @@ function saveAll() {
 }
 
 // ── LOAD SAVED DATA ───────────────────────────────────────────────────────────
+// Saved edits are tied to a fingerprint of DEFAULT_DATA. When the plan in this
+// file changes, older saved edits are dropped so the new plan shows up.
+const DATA_VERSION = (() => {
+  const s = JSON.stringify(DEFAULT_DATA);
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h.toString(36);
+})();
+
 try {
-  const saved = localStorage.getItem('jgb_workouts');
-  if (saved) data = JSON.parse(saved);
+  const saved = JSON.parse(localStorage.getItem('jgb_workouts'));
+  if (saved && saved.v === DATA_VERSION && saved.data) data = saved.data;
+  else if (saved) localStorage.removeItem('jgb_workouts');
 } catch(e) {}
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
