@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JGB / Workouts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --black: #0a0a0a;
+    --offwhite: #f2ede6;
+    --cream: #e8e1d5;
+    --accent: #c8f55a;
+    --accent-dark: #a8d440;
+    --muted: #6b6660;
+    --border: #2a2a2a;
+    --card-bg: #141414;
+    --push: #c8f55a;
+    --cardio: #5af5c8;
+    --pull: #f5c85a;
+    --athletic: #f57c5a;
+    --push-dark: #1a2200;
+    --cardio-dark: #002218;
+    --pull-dark: #221500;
+    --athletic-dark: #220800;
+    --legs: #b45af5;
+    --legs-dark: #1a0022;
+  }
+
+  html { font-size: 16px; }
+  body {
+    background: var(--black);
+    color: var(--offwhite);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOCK SCREEN ── */
+  #lock-screen {
+    position: fixed; inset: 0;
+    background: var(--black);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    z-index: 1000;
+    transition: opacity .5s ease, transform .5s ease;
+  }
+  #lock-screen.exiting {
+    opacity: 0;
+    transform: translateY(-40px);
+    pointer-events: none;
+  }
+
+  .lock-inner { width: 100%; max-width: 360px; padding: 0 24px; }
+
+  .lock-wordmark {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    letter-spacing: .04em;
+    line-height: 1;
+    color: var(--offwhite);
+    margin-bottom: 4px;
+  }
+  .lock-wordmark span { color: var(--offwhite); }
+  .lock-sub {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    margin-bottom: 48px;
+  }
+
+  .lock-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .lock-input-wrap { position: relative; margin-bottom: 12px; }
+  .lock-input {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    color: var(--offwhite);
+    font-family: 'DM Mono', monospace;
+    font-size: 15px;
+    letter-spacing: .1em;
+    padding: 14px 16px;
+    outline: none;
+    border-radius: 0;
+    transition: border-color .2s;
+    -webkit-text-security: disc;
+  }
+  .lock-input:focus { border-color: var(--accent); }
+  .lock-input.error { border-color: var(--athletic); animation: shake .3s ease; }
+  @keyframes shake {
+    0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)}
+  }
+  .lock-error { font-size: 12px; color: var(--athletic); font-family: 'DM Mono', monospace; margin-bottom: 12px; min-height: 16px; }
+  .lock-btn {
+    width: 100%;
+    background: var(--accent);
+    color: var(--black);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: .08em;
+    border: none;
+    padding: 14px;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+  }
+  .lock-btn:hover { background: var(--accent-dark); }
+  .lock-btn:active { transform: scale(.98); }
+
+  .lock-ticker {
+    position: fixed; bottom: 24px; left: 0; right: 0;
+    display: flex; justify-content: center;
+    gap: 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #2a2a2a;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+  }
+
+  /* ── MAIN APP ── */
+  #app { display: none; }
+  #app.visible { display: block; }
+
+  /* Header */
+  .site-header {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--black);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 32px;
+    height: 56px;
+    gap: 24px;
+  }
+  .site-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: .05em;
+    color: var(--offwhite);
+    white-space: nowrap;
+  }
+  .site-logo span { color: var(--offwhite); }
+  .breadcrumb {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .08em;
+  }
+  .breadcrumb b { color: var(--offwhite); font-weight: 400; }
+  .header-actions { margin-left: auto; display: flex; gap: 10px; align-items: center; }
+  .btn-edit-toggle {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all .15s;
+  }
+  .btn-edit-toggle:hover, .btn-edit-toggle.active {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-save {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border: 1px solid var(--accent);
+    background: var(--accent);
+    color: var(--black);
+    cursor: pointer;
+    transition: all .15s;
+    display: none;
+  }
+  .btn-save:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+  .btn-save.visible { display: block; }
+  .edit-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    background: var(--accent);
+    color: var(--black);
+    padding: 2px 7px;
+    letter-spacing: .08em;
+    display: none;
+  }
+  .edit-badge.visible { display: block; }
+
+  /* Hero strip */
+  .hero-strip {
+    padding: 48px 32px 32px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 8vw, 96px);
+    letter-spacing: .02em;
+    line-height: .95;
+    color: var(--offwhite);
+    margin-bottom: 16px;
+  }
+  .hero-title span { color: var(--accent); }
+  .hero-meta {
+    display: flex; gap: 24px; flex-wrap: wrap;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: .08em;
+  }
+  .hero-meta-item b { color: var(--offwhite); font-weight: 400; }
+
+  /* Week tabs */
+  .week-nav {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .week-nav::-webkit-scrollbar { display: none; }
+  .week-btn {
+    flex-shrink: 0;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 16px 28px;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    transition: all .15s;
+    white-space: nowrap;
+  }
+  .week-btn:hover { color: var(--offwhite); }
+  .week-btn.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  /* Week note */
+  .week-note-bar {
+    padding: 14px 32px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    display: flex; align-items: baseline; gap: 10px;
+  }
+  .week-note-bar::before {
+    content: '//';
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--accent);
+    flex-shrink: 0;
+  }
+  #week-note-text { flex: 1; }
+  #week-note-text[contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed var(--accent);
+    padding-bottom: 2px;
+    color: var(--offwhite);
+  }
+
+  /* Day grid */
+  .day-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 700px) {
+    .day-grid { grid-template-columns: 1fr; }
+    .site-header { padding: 0 16px; }
+    .hero-strip { padding: 32px 16px 24px; }
+    .week-note-bar { padding: 12px 16px; }
+  }
+
+  .day-card {
+    background: var(--card-bg);
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .day-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .day-card.push::before { background: var(--push); }
+  .day-card.cardio::before { background: var(--cardio); }
+  .day-card.pull::before { background: var(--pull); }
+  .day-card.athletic::before { background: var(--athletic); }
+  .day-card.legs::before { background: var(--legs); }
+
+  .day-label-row {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+  }
+  .day-dow {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .day-type-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    font-weight: 500;
+  }
+  .push .day-type-badge { background: var(--push-dark); color: var(--push); }
+  .cardio .day-type-badge { background: var(--cardio-dark); color: var(--cardio); }
+  .pull .day-type-badge { background: var(--pull-dark); color: var(--pull); }
+  .athletic .day-type-badge { background: var(--athletic-dark); color: var(--athletic); }
+  .legs .day-type-badge { background: var(--legs-dark); color: var(--legs); }
+
+  .day-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: .04em;
+    color: var(--offwhite);
+    margin-bottom: 16px;
+    line-height: 1.1;
+  }
+  .day-title[contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed var(--accent);
+  }
+
+  .exercise-list { list-style: none; margin-bottom: 14px; }
+  .exercise-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .exercise-item:last-child { border-bottom: none; }
+  .ex-name {
+    font-size: 13px;
+    color: var(--offwhite);
+    font-weight: 300;
+    flex: 1;
+  }
+  .ex-name[contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed rgba(200,245,90,.4);
+  }
+  .ex-sets {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .ex-sets[contenteditable="true"] {
+    outline: none;
+    border-bottom: 1px dashed rgba(200,245,90,.4);
+    color: var(--offwhite);
+  }
+
+  /* Edit mode: add/remove exercise */
+  .add-ex-btn, .remove-ex-btn {
+    background: none; border: none; cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: .08em;
+    transition: color .15s;
+    display: none;
+    padding: 0;
+  }
+  .remove-ex-btn {
+    color: #444;
+    margin-left: 8px;
+    font-size: 14px;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .remove-ex-btn:hover { color: var(--athletic); }
+  .add-ex-btn {
+    color: var(--accent);
+    padding: 4px 0;
+    text-align: left;
+    margin-top: 6px;
+  }
+  .add-ex-btn:hover { color: var(--accent-dark); }
+  body.edit-mode .add-ex-btn { display: block; }
+  body.edit-mode .remove-ex-btn { display: inline-block; }
+
+  .day-footnote {
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    line-height: 1.5;
+    padding-top: 6px;
+    border-top: 1px solid var(--border);
+  }
+  .day-footnote[contenteditable="true"] {
+    outline: none;
+    color: var(--offwhite);
+    border-top-color: var(--accent);
+    border-top-style: dashed;
+  }
+
+  /* Edit mode global */
+  body.edit-mode [contenteditable="true"] { cursor: text; }
+  body.edit-mode .day-card { outline: 1px dashed rgba(200,245,90,.12); }
+
+  /* Footer */
+  .site-footer {
+    padding: 24px 32px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    color: #333;
+    letter-spacing: .1em;
+    display: flex; justify-content: space-between;
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--accent); color: var(--black);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px; letter-spacing: .1em; text-transform: uppercase;
+    padding: 10px 20px;
+    transition: transform .3s ease;
+    z-index: 9999;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div class="lock-inner">
+    <div class="lock-wordmark">JG<span>B</span></div>
+    <div class="lock-sub">Private — enter access code</div>
+    <div class="lock-label">Password</div>
+    <div class="lock-input-wrap">
+      <input class="lock-input" id="pwd-input" type="password" placeholder="••••••••" autocomplete="off" />
+    </div>
+    <div class="lock-error" id="lock-error"></div>
+    <button class="lock-btn" id="lock-submit">ENTER</button>
+  </div>
+  <div class="lock-ticker">
+    <span>WORKOUTS</span><span>•</span><span>CYCLE 2</span><span>•</span><span>4 WEEKS</span><span>•</span><span>20 SESSIONS</span>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header class="site-header">
+    <div class="site-logo">JG<span>B</span></div>
+    <div class="breadcrumb">/ <b>workouts</b> / cycle-2</div>
+    <div class="header-actions">
+      <span class="edit-badge" id="edit-badge">EDITING</span>
+      <button class="btn-edit-toggle" id="edit-toggle-btn" onclick="toggleEdit()">Edit</button>
+      <button class="btn-save visible" id="save-btn" onclick="saveAll()" style="display:none">Save</button>
+    </div>
+  </header>
+
+  <div class="hero-strip">
+    <div class="hero-eyebrow">Cycle 2 · Cut Phase · 5 days · 4 weeks</div>
+    <div class="hero-title">CYCLE<br><span>02</span></div>
+    <div class="hero-meta">
+      <div class="hero-meta-item"><b>Goal</b> — Muscle, weight, cardio, soccer</div>
+      <div class="hero-meta-item"><b>Schedule</b> — Mon / Tue / Thu / Fri / Sat</div>
+      <div class="hero-meta-item"><b>Duration</b> — 30–40 min/session</div>
+    </div>
+  </div>
+
+  <nav class="week-nav" id="week-nav"></nav>
+  <div class="week-note-bar"><span id="week-note-text" oninput="data.weeks[activeWeek].note = this.textContent"></span></div>
+  <div class="day-grid" id="day-grid"></div>
+
+  <footer class="site-footer">
+    <span>jgb4 / workouts</span>
+    <span id="footer-date"></span>
+  </footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── DATA ──────────────────────────────────────────────────────────────────────
+const DEFAULT_DATA = {
+  weeks: [
+    {
+      label: "Week 1 — Foundation",
+      note: "Cut phase, 5-day split. Eat ~2,400 cal/day, 160g+ protein. Rest 45–60s on accessories, 90s on big lifts. Shoulders down and back on all pulls and presses — traps help but shouldn't dominate.",
+      days: [
+        {
+          day: "Monday", type: "push",
+          title: "Push — Chest, Shoulders, Triceps",
+          exercises: [
+            { name: "Flat barbell bench press", sets: "4 × 8–10" },
+            { name: "Incline dumbbell press", sets: "3 × 10–12" },
+            { name: "Overhead dumbbell press", sets: "3 × 10–12" },
+            { name: "Cable lateral raise", sets: "3 × 15" },
+            { name: "Tricep rope pushdown", sets: "3 × 15" }
+          ],
+          note: "Higher rep range on accessories — keeps intensity up and burns more at deficit. Scapula packed on press, don't let shoulders shrug up."
+        },
+        {
+          day: "Tuesday", type: "cardio",
+          title: "Run + Core",
+          exercises: [
+            { name: "Reservoir run (moderate pace)", sets: "25 min" },
+            { name: "Plank hold", sets: "3 × 60s" },
+            { name: "Dead bug", sets: "3 × 10/side" },
+            { name: "Hanging knee raise", sets: "3 × 12" },
+            { name: "Pallof press", sets: "3 × 12/side" }
+          ],
+          note: "Reservoir = ~1.6 miles. Talking is hard but possible. Active recovery between Monday push and Thursday pull."
+        },
+        {
+          day: "Thursday", type: "pull",
+          title: "Pull — Back & Biceps",
+          exercises: [
+            { name: "Barbell row", sets: "4 × 10" },
+            { name: "Lat pulldown (wide grip)", sets: "3 × 12" },
+            { name: "Seated cable row (narrow grip)", sets: "3 × 12" },
+            { name: "Face pull", sets: "3 × 15" },
+            { name: "Barbell curl", sets: "3 × 12" }
+          ],
+          note: "Depress scapula on pulldowns and rows — lats do the work, not traps. RDL moves to Leg Day Friday."
+        },
+        {
+          day: "Friday", type: "legs",
+          title: "Legs — Quads, Hamstrings, Glutes",
+          exercises: [
+            { name: "Back squat", sets: "4 × 10" },
+            { name: "Romanian deadlift", sets: "3 × 10" },
+            { name: "Goblet squat", sets: "3 × 12" },
+            { name: "Nordic hamstring curl", sets: "3 × 6" },
+            { name: "Lateral band walk", sets: "3 × 15/side" }
+          ],
+          note: "Squats and RDLs are your anchors. Nordic curls will humble you — that's fine. Hamstrings are your soccer engine."
+        },
+        {
+          day: "Saturday", type: "athletic",
+          title: "Conditioning + Power",
+          exercises: [
+            { name: "Box jump", sets: "3 × 5" },
+            { name: "Battle rope intervals", sets: "5 × 30s on / 30s off" },
+            { name: "Lateral shuffle + sprint combo", sets: "4 × 30s" },
+            { name: "Reservoir sprint intervals", sets: "6 × 200m w/ 90s rest" }
+          ],
+          note: "Legs already worked Friday so no heavy squats today — pure speed and conditioning. 200m sprints are the moneymaker."
+        }
+      ]
+    },
+    {
+      label: "Week 2 — Load Up",
+      note: "Add 5 lbs to all barbell lifts vs Week 1. Run goes up 5 min. Weight should be dropping ~0.5–1 lb/week. If not, tighten the diet before touching the program.",
+      days: [
+        {
+          day: "Monday", type: "push",
+          title: "Push — Chest, Shoulders, Triceps",
+          exercises: [
+            { name: "Flat barbell bench press", sets: "4 × 8–10 (+5 lbs)" },
+            { name: "Incline dumbbell press", sets: "3 × 10–12 (heavier)" },
+            { name: "Arnold press", sets: "3 × 12" },
+            { name: "Cable lateral raise", sets: "3 × 15" },
+            { name: "Close-grip bench press", sets: "3 × 10" }
+          ],
+          note: "Swap OHP for Arnold press — hits all three delt heads. Close-grip as tricep finisher."
+        },
+        {
+          day: "Tuesday", type: "cardio",
+          title: "Run + Core",
+          exercises: [
+            { name: "Reservoir run (moderate-hard)", sets: "30 min" },
+            { name: "Plank with shoulder taps", sets: "3 × 20 taps" },
+            { name: "Dead bug", sets: "3 × 12/side" },
+            { name: "Hanging leg raise", sets: "3 × 10" },
+            { name: "Cable wood chop", sets: "3 × 12/side" }
+          ],
+          note: "30 min continuous. Push the pace — breathing hard by the back half of the loop."
+        },
+        {
+          day: "Thursday", type: "pull",
+          title: "Pull — Back & Biceps",
+          exercises: [
+            { name: "Barbell row", sets: "4 × 10 (+5 lbs)" },
+            { name: "Pull-up or assisted pull-up", sets: "3 × 6–8" },
+            { name: "Seated cable row (narrow grip)", sets: "3 × 12" },
+            { name: "Face pull", sets: "3 × 15" },
+            { name: "Incline dumbbell curl", sets: "3 × 12" }
+          ],
+          note: "Swap lat pulldown for pull-ups. Full range of motion — dead hang to chin over bar."
+        },
+        {
+          day: "Friday", type: "legs",
+          title: "Legs — Quads, Hamstrings, Glutes",
+          exercises: [
+            { name: "Back squat", sets: "4 × 10 (+5 lbs)" },
+            { name: "Romanian deadlift", sets: "3 × 10 (heavier)" },
+            { name: "Bulgarian split squat", sets: "3 × 10/side" },
+            { name: "Nordic hamstring curl", sets: "3 × 6" },
+            { name: "Lateral band walk", sets: "3 × 15/side" }
+          ],
+          note: "Swap goblet squat for Bulgarian split squat — unilateral work exposes imbalances and burns more. Your quads will know about it."
+        },
+        {
+          day: "Saturday", type: "athletic",
+          title: "Conditioning + Power",
+          exercises: [
+            { name: "Depth drop to broad jump", sets: "3 × 5" },
+            { name: "Battle rope intervals", sets: "5 × 30s on / 30s off" },
+            { name: "Lateral shuffle + sprint combo", sets: "5 × 30s" },
+            { name: "Reservoir sprint intervals", sets: "8 × 200m w/ 90s rest" }
+          ],
+          note: "Up to 8 sprint reps this week. Shuffle + sprint: 5 steps each direction, explode 10m forward — pure soccer movement."
+        }
+      ]
+    },
+    {
+      label: "Week 3 — Intensity",
+      note: "Heaviest week. Top sets return on bench and row. Cardio goes up again. Legs are your biggest calorie-burning muscle group — don't skip Friday.",
+      days: [
+        {
+          day: "Monday", type: "push",
+          title: "Push — Chest, Shoulders, Triceps",
+          exercises: [
+            { name: "Flat barbell bench — 1 heavy top set", sets: "1 × 5 (near-max)" },
+            { name: "Flat barbell bench — back-off sets", sets: "3 × 10 (80% of top)" },
+            { name: "Incline dumbbell press", sets: "3 × 10–12" },
+            { name: "Overhead barbell press", sets: "3 × 8" },
+            { name: "Tricep dip (weighted if possible)", sets: "3 × 10" }
+          ],
+          note: "Top set heavy and controlled, no grinding. Back-off sets at 80% are where the volume lives."
+        },
+        {
+          day: "Tuesday", type: "cardio",
+          title: "Run + Core",
+          exercises: [
+            { name: "10 min easy → 15 min tempo → 5 min easy", sets: "30 min total" },
+            { name: "Hanging leg raise (straight legs)", sets: "3 × 10" },
+            { name: "Ab wheel rollout", sets: "3 × 8" },
+            { name: "Side plank with hip dip", sets: "3 × 10/side" },
+            { name: "Hollow body hold", sets: "3 × 30s" }
+          ],
+          note: "Tempo = hardest sustained pace you can hold. This is the aerobic threshold builder. It will suck — that's the point."
+        },
+        {
+          day: "Thursday", type: "pull",
+          title: "Pull — Back & Biceps",
+          exercises: [
+            { name: "Barbell row — 1 heavy top set", sets: "1 × 5" },
+            { name: "Barbell row — back-off sets", sets: "3 × 10" },
+            { name: "Pull-up", sets: "4 × max reps" },
+            { name: "Face pull", sets: "3 × 15" },
+            { name: "Barbell curl", sets: "3 × 10 (heavier)" }
+          ],
+          note: "Pull-up max sets: rest 2 min between, track total reps. That number is your Cycle 3 benchmark."
+        },
+        {
+          day: "Friday", type: "legs",
+          title: "Legs — Quads, Hamstrings, Glutes",
+          exercises: [
+            { name: "Back squat (heavier)", sets: "4 × 8" },
+            { name: "Trap bar deadlift", sets: "3 × 6" },
+            { name: "Bulgarian split squat", sets: "3 × 10/side" },
+            { name: "Nordic hamstring curl", sets: "3 × 6" },
+            { name: "Farmer carry", sets: "3 × 30m" }
+          ],
+          note: "Trap bar deadlift joins this week — more quad than conventional, less lower back stress than barbell. Farmer carry = full body metabolic finisher."
+        },
+        {
+          day: "Saturday", type: "athletic",
+          title: "Conditioning + Power",
+          exercises: [
+            { name: "Single-leg box jump", sets: "3 × 4/side" },
+            { name: "Resisted lateral sprint (band around waist)", sets: "4 × 20m" },
+            { name: "Battle rope intervals", sets: "4 × 30s on / 30s off" },
+            { name: "Reservoir sprint intervals", sets: "8 × 200m w/ 75s rest" }
+          ],
+          note: "Shorter rest on sprints (75s vs 90s) — that's where fitness actually improves. Single-leg box jump is sport-specific power."
+        }
+      ]
+    },
+    {
+      label: "Week 4 — Test & Reset",
+      note: "Drop volume (2 sets on lifting accessories), maintain intensity. Weigh yourself Monday AM. Record bench 1RM estimate + pull-up count + squat 5RM. These numbers set Cycle 3.",
+      days: [
+        {
+          day: "Monday", type: "push",
+          title: "Push — Test Day",
+          exercises: [
+            { name: "Flat barbell bench — 1RM test", sets: "Work up to 1–2 rep max" },
+            { name: "Incline dumbbell press", sets: "2 × 10" },
+            { name: "Overhead barbell press", sets: "2 × 8" },
+            { name: "Tricep rope pushdown", sets: "2 × 15" }
+          ],
+          note: "Work up in sets of 5, 3, 2, 1 to find your max. Write it down — this is your Cycle 3 benchmark."
+        },
+        {
+          day: "Tuesday", type: "cardio",
+          title: "Deload Run + Core",
+          exercises: [
+            { name: "Easy reservoir run", sets: "20 min" },
+            { name: "Plank", sets: "3 × 60s" },
+            { name: "Hanging leg raise", sets: "3 × 12" },
+            { name: "Bird dog", sets: "3 × 10/side" }
+          ],
+          note: "Deload run. Easy pace — feel how much better your lungs are than Week 1."
+        },
+        {
+          day: "Thursday", type: "pull",
+          title: "Pull — Test Day",
+          exercises: [
+            { name: "Pull-up — max rep test", sets: "3 × max (record total)" },
+            { name: "Barbell row", sets: "2 × 10" },
+            { name: "Seated cable row", sets: "2 × 12" },
+            { name: "Face pull", sets: "2 × 15" }
+          ],
+          note: "Pull-up test: rest 2 min between sets, record total. In Cycle 3 you'll add weight to these."
+        },
+        {
+          day: "Friday", type: "legs",
+          title: "Legs — Test Day",
+          exercises: [
+            { name: "Back squat — 5RM test", sets: "Work up to 5-rep max" },
+            { name: "Romanian deadlift", sets: "2 × 10" },
+            { name: "Bulgarian split squat", sets: "2 × 8/side" },
+            { name: "Nordic hamstring curl", sets: "2 × 6" }
+          ],
+          note: "5RM squat test: sets of 8, 5, 3, then your 5RM attempt. Record it. Cycle 3 squat programming starts from this number."
+        },
+        {
+          day: "Saturday", type: "athletic",
+          title: "Conditioning — Game Sim",
+          exercises: [
+            { name: "Box jump", sets: "3 × 5" },
+            { name: "Cone drill / figure 8 agility", sets: "5 × 30s" },
+            { name: "Lateral shuffle + sprint combo", sets: "4 × 30s" },
+            { name: "Game-sim sprint circuit", sets: "10 × 30m w/ 30s rest" }
+          ],
+          note: "Game-sim sprints: 30m hard, walk back, 30s rest, go again. If you're playing games again soon, this preps you."
+        }
+      ]
+    }
+  ]
+};
+
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let data = JSON.parse(JSON.stringify(DEFAULT_DATA));
+let activeWeek = 0;
+let editMode = false;
+
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+// SHA-256 of the access code (the code itself is not stored in the page)
+const PWD_HASH = '6a1cbf586197d752d259ac66faa861e4b3eb06dd8f37c5d027d7158fed9ea43a';
+
+async function sha256(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function tryUnlock() {
+  const val = document.getElementById('pwd-input').value;
+  if (await sha256(val) === PWD_HASH) {
+    const ls = document.getElementById('lock-screen');
+    ls.classList.add('exiting');
+    setTimeout(() => {
+      ls.style.display = 'none';
+      const app = document.getElementById('app');
+      app.classList.add('visible');
+      renderWeekNav();
+      renderWeek();
+    }, 500);
+  } else {
+    const inp = document.getElementById('pwd-input');
+    inp.classList.add('error');
+    document.getElementById('lock-error').textContent = 'Incorrect password.';
+    setTimeout(() => inp.classList.remove('error'), 400);
+    inp.value = '';
+  }
+}
+
+document.getElementById('lock-submit').addEventListener('click', tryUnlock);
+document.getElementById('pwd-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') tryUnlock();
+});
+
+// ── RENDER ────────────────────────────────────────────────────────────────────
+function renderWeekNav() {
+  const nav = document.getElementById('week-nav');
+  nav.innerHTML = data.weeks.map((w, i) => `
+    <button class="week-btn ${i === activeWeek ? 'active' : ''}" onclick="switchWeek(${i})">
+      ${w.label}
+    </button>
+  `).join('');
+}
+
+function renderWeek() {
+  const week = data.weeks[activeWeek];
+  const noteEl = document.getElementById('week-note-text');
+  noteEl.textContent = week.note;
+  noteEl.contentEditable = editMode ? 'true' : 'false';
+
+  const grid = document.getElementById('day-grid');
+  grid.innerHTML = week.days.map((day, di) => `
+    <div class="day-card ${day.type}">
+      <div class="day-label-row">
+        <span class="day-dow">${day.day}</span>
+        <span class="day-type-badge">${day.type}</span>
+      </div>
+      <div class="day-title" ${editMode ? 'contenteditable="true"' : ''}
+           data-week="${activeWeek}" data-day="${di}" data-field="title"
+           oninput="updateField(this)">${day.title}</div>
+      <ul class="exercise-list" id="exlist-${activeWeek}-${di}">
+        ${day.exercises.map((ex, ei) => renderExerciseItem(activeWeek, di, ei, ex)).join('')}
+      </ul>
+      ${editMode ? `<button class="add-ex-btn" onclick="addExercise(${activeWeek},${di})">+ Add exercise</button>` : ''}
+      <div class="day-footnote" ${editMode ? 'contenteditable="true"' : ''}
+           data-week="${activeWeek}" data-day="${di}" data-field="note"
+           oninput="updateField(this)">${day.note || ''}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('footer-date').textContent = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+}
+
+function renderExerciseItem(wi, di, ei, ex) {
+  return `
+    <li class="exercise-item" id="ex-${wi}-${di}-${ei}">
+      <span class="ex-name" ${editMode ? 'contenteditable="true"' : ''}
+            data-week="${wi}" data-day="${di}" data-ex="${ei}" data-field="name"
+            oninput="updateExField(this)">${ex.name}</span>
+      <span class="ex-sets" ${editMode ? 'contenteditable="true"' : ''}
+            data-week="${wi}" data-day="${di}" data-ex="${ei}" data-field="sets"
+            oninput="updateExField(this)">${ex.sets}</span>
+      <button class="remove-ex-btn" onclick="removeExercise(${wi},${di},${ei})" title="Remove">×</button>
+    </li>
+  `;
+}
+
+// ── INTERACTIONS ──────────────────────────────────────────────────────────────
+function switchWeek(i) {
+  activeWeek = i;
+  renderWeekNav();
+  renderWeek();
+}
+
+function toggleEdit() {
+  editMode = !editMode;
+  document.body.classList.toggle('edit-mode', editMode);
+  document.getElementById('edit-toggle-btn').classList.toggle('active', editMode);
+  document.getElementById('edit-badge').classList.toggle('visible', editMode);
+  const saveBtn = document.getElementById('save-btn');
+  saveBtn.style.display = editMode ? 'block' : 'none';
+  renderWeek();
+  if (editMode) showToast('Edit mode on — click any text to edit');
+}
+
+function updateField(el) {
+  const wi = +el.dataset.week, di = +el.dataset.day, field = el.dataset.field;
+  data.weeks[wi].days[di][field] = el.textContent;
+}
+
+function updateExField(el) {
+  const wi = +el.dataset.week, di = +el.dataset.day, ei = +el.dataset.ex, field = el.dataset.field;
+  data.weeks[wi].days[di].exercises[ei][field] = el.textContent;
+}
+
+function addExercise(wi, di) {
+  data.weeks[wi].days[di].exercises.push({ name: 'New exercise', sets: '3 × 10' });
+  const list = document.getElementById(`exlist-${wi}-${di}`);
+  const ei = data.weeks[wi].days[di].exercises.length - 1;
+  const tmp = document.createElement('div');
+  tmp.innerHTML = renderExerciseItem(wi, di, ei, data.weeks[wi].days[di].exercises[ei]);
+  list.appendChild(tmp.firstElementChild);
+}
+
+function removeExercise(wi, di, ei) {
+  data.weeks[wi].days[di].exercises.splice(ei, 1);
+  const list = document.getElementById(`exlist-${wi}-${di}`);
+  list.innerHTML = data.weeks[wi].days[di].exercises.map((ex, i) => renderExerciseItem(wi, di, i, ex)).join('');
+}
+
+function saveAll() {
+  try { localStorage.setItem('jgb_workouts', JSON.stringify({ v: DATA_VERSION, data })); } catch(e) {}
+  showToast('Saved ✓');
+  editMode = false;
+  document.body.classList.remove('edit-mode');
+  document.getElementById('edit-toggle-btn').classList.remove('active');
+  document.getElementById('edit-badge').classList.remove('visible');
+  document.getElementById('save-btn').style.display = 'none';
+  renderWeek();
+}
+
+// ── LOAD SAVED DATA ───────────────────────────────────────────────────────────
+// Saved edits are tied to a fingerprint of DEFAULT_DATA. When the plan in this
+// file changes, older saved edits are dropped so the new plan shows up.
+const DATA_VERSION = (() => {
+  const s = JSON.stringify(DEFAULT_DATA);
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h.toString(36);
+})();
+
+try {
+  const saved = JSON.parse(localStorage.getItem('jgb_workouts'));
+  if (saved && saved.v === DATA_VERSION && saved.data) data = saved.data;
+  else if (saved) localStorage.removeItem('jgb_workouts');
+} catch(e) {}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2400);
+}
+</script>
+</body>
+</html>
